@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clima Córdoba - Dashboard Moderno</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+        }
+
+        .last-update {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 10px 20px;
+            display: inline-block;
+            color: white;
+            font-weight: 500;
+            margin-top: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .weather-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .weather-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 300% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        .weather-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .temperature-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .temp-main {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: tempGlow 2s ease-in-out infinite alternate;
+        }
+
+        .temp-range {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+
+        .temp-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            min-width: 80px;
+        }
+
+        .temp-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .temp-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            background: rgba(255,255,255,0.9);
+            transform: scale(1.05);
+        }
+
+        .detail-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .detail-text {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes tempGlow {
+            from {
+                filter: brightness(1);
+            }
+            to {
+                filter: brightness(1.2);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .weather-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .temp-main {
+                font-size: 3rem;
+            }
+            
+            .weather-details {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            animation: bounce 2s infinite;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-cloud-sun"></i> Clima Córdoba Capital</h1>
+            <p class="subtitle">Pronóstico meteorológico actualizado en tiempo real</p>
+            <div class="last-update" id="lastUpdate">
+                <i class="fas fa-sync-alt"></i> Actualizando...
+            </div>
+        </header>
+
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Cargando datos meteorológicos...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error al cargar los datos. Por favor, intenta nuevamente.</p>
+        </div>
+
+        <div id="weatherContent" class="weather-grid" style="display: none;">
+            <div class="weather-card">
+                <div class="card-header">
+                    <i class="card-icon fas fa-thermometer-half"></i>
+                    <h2 class="card-title">Temperatura</h2>
+                </div>
+                <div class="temperature-display">
+                    <div class="temp-main" id="currentTemp">--°C</div>
+                    <div class="temp-range">
+                        <div class="temp-item">
+                            <div class="temp-label">Máxima</div>
+                            <div class="temp-value" id="maxTemp">--°C</div>
+                        </div>
+                        <div class="temp-item">
+                            <div class="temp-label">Mínima</div>
+                            <div class="temp-value" id="minTemp">--°C</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="card-header">
+                    <i class="card-icon fas fa-tint"></i>
+                    <h2 class="card-title">Humedad & Precipitación</h2>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-tint"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Humedad Máx</div>
+                            <div class="detail-value" id="maxHumidity">--%</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-tint"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Humedad Mín</div>
+                            <div class="detail-value" id="minHumidity">--%</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-cloud-rain"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Precipitación</div>
+                            <div class="detail-value" id="precipitation">-- mm</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="card-header">
+                    <i class="card-icon fas fa-wind"></i>
+                    <h2 class="card-title">Viento & Presión</h2>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-wind"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Velocidad Media</div>
+                            <div class="detail-value" id="windSpeed">-- km/h</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-location-arrow"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Dirección</div>
+                            <div class="detail-value" id="windDirection">--°</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-compress-arrows-alt"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Presión</div>
+                            <div class="detail-value" id="pressure">-- hPa</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weather-card">
+                <div class="card-header">
+                    <i class="card-icon fas fa-cloud"></i>
+                    <h2 class="card-title">Condiciones del Cielo</h2>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-cloud"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Nubosidad Máx</div>
+                            <div class="detail-value" id="maxClouds">--%</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="detail-icon fas fa-sun"></i>
+                        <div class="detail-text">
+                            <div class="detail-label">Nubosidad Mín</div>
+                            <div class="detail-value" id="minClouds">--%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="fetchWeatherData()" title="Actualizar datos">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script>
+        let weatherData = null;
+
+        function parseWeatherData(html) {
+            const data = {
+                temperature: {
+                    max: null,
+                    min: null,
+                    current: null
+                },
+                humidity: {
+                    max: null,
+                    min: null
+                },
+                precipitation: null,
+                pressure: {
+                    max: null,
+                    min: null
+                },
+                wind: {
+                    speed: null,
+                    direction: null
+                },
+                clouds: {
+                    max: null,
+                    min: null
+                },
+                lastUpdate: null
+            };
+
+            // Extract temperature data
+            const tempMatch = html.match(/Máxima:\s*([\d.]+)\s*ºC.*?Mínima:\s*([\d.]+)\s*ºC/s);
+            if (tempMatch) {
+                data.temperature.max = parseFloat(tempMatch[1]);
+                data.temperature.min = parseFloat(tempMatch[2]);
+                data.temperature.current = Math.round((data.temperature.max + data.temperature.min) / 2);
+            }
+
+            // Extract humidity data
+            const humidityMatch = html.match(/Humedad.*?Máxima:\s*([\d.]+)\s*%.*?Mínima:\s*([\d.]+)\s*%/s);
+            if (humidityMatch) {
+                data.humidity.max = parseFloat(humidityMatch[1]);
+                data.humidity.min = parseFloat(humidityMatch[2]);
+            }
+
+            // Extract precipitation
+            const precipMatch = html.match(/Prec\.Acumulada:\s*([\d.]+)\s*mm/);
+            if (precipMatch) {
+                data.precipitation = parseFloat(precipMatch[1]);
+            }
+
+            // Extract pressure data
+            const pressureMatch = html.match(/Presión.*?Máxima:\s*([\d.]+)\s*hPa.*?Mínima:\s*([\d.]+)\s*hPa/s);
+            if (pressureMatch) {
+                data.pressure.max = parseFloat(pressureMatch[1]);
+                data.pressure.min = parseFloat(pressureMatch[2]);
+            }
+
+            // Extract wind data
+            const windMatch = html.match(/Media:\s*([\d.]+)\s*km\/h/);
+            if (windMatch) {
+                data.wind.speed = parseFloat(windMatch[1]);
+            }
+
+            const windDirMatch = html.match(/Dirección predominante:\s*(\d+)/);
+            if (windDirMatch) {
+                data.wind.direction = parseInt(windDirMatch[1]);
+            }
+
+            // Extract cloud data
+            const cloudMatch = html.match(/Nubosidad.*?Máxima:\s*([\d.]+)\s*%%.*?Mínima:\s*([\d.]+)\s*%%/s);
+            if (cloudMatch) {
+                data.clouds.max = parseFloat(cloudMatch[1]);
+                data.clouds.min = parseFloat(cloudMatch[2]);
+            }
+
+            // Extract last update
+            const updateMatch = html.match(/Actualizado:\s*([\d\/]+\s*[\d]+\s*hs\.)/);
+            if (updateMatch) {
+                data.lastUpdate = updateMatch[1];
+            }
+
+            return data;
+        }
+
+        function updateUI(data) {
+            // Update temperature
+            document.getElementById('currentTemp').textContent = `${data.temperature.current}°C`;
+            document.getElementById('maxTemp').textContent = `${data.temperature.max}°C`;
+            document.getElementById('minTemp').textContent = `${data.temperature.min}°C`;
+
+            // Update humidity and precipitation
+            document.getElementById('maxHumidity').textContent = `${data.humidity.max}%`;
+            document.getElementById('minHumidity').textContent = `${data.humidity.min}%`;
+            document.getElementById('precipitation').textContent = `${data.precipitation} mm`;
+
+            // Update wind and pressure
+            document.getElementById('windSpeed').textContent = `${data.wind.speed} km/h`;
+            document.getElementById('windDirection').textContent = `${data.wind.direction}°`;
+            document.getElementById('pressure').textContent = `${Math.round((data.pressure.max + data.pressure.min) / 2)} hPa`;
+
+            // Update clouds
+            document.getElementById('maxClouds').textContent = `${data.clouds.max}%`;
+            document.getElementById('minClouds').textContent = `${data.clouds.min}%`;
+
+            // Update last update time
+            document.getElementById('lastUpdate').innerHTML = `<i class="fas fa-sync-alt"></i> Actualizado: ${data.lastUpdate}`;
+        }
+
+        async function fetchWeatherData() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const weatherContentEl = document.getElementById('weatherContent');
+            const refreshBtn = document.querySelector('.refresh-btn i');
+
+            // Show loading state
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            weatherContentEl.style.display = 'none';
+            refreshBtn.style.animation = 'spin 1s linear infinite';
+
+            try {
+                // Use a proxy to avoid CORS issues
+                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                const targetUrl = 'https://wrf.ohmc.ar/pronosticos/CBA/localidad/cordoba-capital/';
+                
+                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+                const data = await response.json();
+                
+                if (data.contents) {
+                    weatherData = parseWeatherData(data.contents);
+                    updateUI(weatherData);
+                    
+                    // Hide loading, show content
+                    loadingEl.style.display = 'none';
+                    weatherContentEl.style.display = 'grid';
+                } else {
+                    throw new Error('No se pudieron obtener los datos');
+                }
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                
+                // Try to load cached data if available
+                if (weatherData) {
+                    updateUI(weatherData);
+                    weatherContentEl.style.display = 'grid';
+                    errorEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>Error al actualizar. Mostrando datos anteriores.</p>';
+                }
+            } finally {
+                refreshBtn.style.animation = '';
+            }
+        }
+
+        // Auto-refresh every 30 minutes
+        setInterval(fetchWeatherData, 30 * 60 * 1000);
+
+        // Initial load
+        fetchWeatherData();
+
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.weather-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.2}s`;
+            });
+        });
+    </script>
+</body>
+</html>
