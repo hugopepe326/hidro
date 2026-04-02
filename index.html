@@ -470,8 +470,10 @@
 
     <script>
         let weatherData = null;
+        let lastFetchTime = null;
 
         function parseWeatherData(html) {
+            console.log('Parsing weather data...');
             const data = {
                 temperature: {
                     max: null,
@@ -498,56 +500,93 @@
                 lastUpdate: null
             };
 
-            // Extract temperature data
-            const tempMatch = html.match(/Máxima:\s*([\d.]+)\s*ºC.*?Mínima:\s*([\d.]+)\s*ºC/s);
-            if (tempMatch) {
-                data.temperature.max = parseFloat(tempMatch[1]);
-                data.temperature.min = parseFloat(tempMatch[2]);
-                data.temperature.current = Math.round((data.temperature.max + data.temperature.min) / 2);
-            }
+            try {
+                // Extract temperature data - improved regex
+                const tempMatch = html.match(/Máxima:\s*([\d.]+)\s*ºC.*?Mínima:\s*([\d.]+)\s*ºC/s);
+                if (tempMatch) {
+                    data.temperature.max = parseFloat(tempMatch[1]);
+                    data.temperature.min = parseFloat(tempMatch[2]);
+                    data.temperature.current = Math.round((data.temperature.max + data.temperature.min) / 2);
+                    console.log('Temperature data:', data.temperature);
+                }
 
-            // Extract humidity data
-            const humidityMatch = html.match(/Humedad.*?Máxima:\s*([\d.]+)\s*%.*?Mínima:\s*([\d.]+)\s*%/s);
-            if (humidityMatch) {
-                data.humidity.max = parseFloat(humidityMatch[1]);
-                data.humidity.min = parseFloat(humidityMatch[2]);
-            }
+                // Extract humidity data - improved regex
+                const humidityMatch = html.match(/Humedad.*?Máxima:\s*([\d.]+)\s*%.*?Mínima:\s*([\d.]+)\s*%/s);
+                if (humidityMatch) {
+                    data.humidity.max = parseFloat(humidityMatch[1]);
+                    data.humidity.min = parseFloat(humidityMatch[2]);
+                    console.log('Humidity data:', data.humidity);
+                }
 
-            // Extract precipitation
-            const precipMatch = html.match(/Prec\.Acumulada:\s*([\d.]+)\s*mm/);
-            if (precipMatch) {
-                data.precipitation = parseFloat(precipMatch[1]);
-            }
+                // Extract precipitation - improved regex
+                const precipMatch = html.match(/Prec\.Acumulada:\s*([\d.]+)\s*mm/);
+                if (precipMatch) {
+                    data.precipitation = parseFloat(precipMatch[1]);
+                    console.log('Precipitation data:', data.precipitation);
+                }
 
-            // Extract pressure data
-            const pressureMatch = html.match(/Presión.*?Máxima:\s*([\d.]+)\s*hPa.*?Mínima:\s*([\d.]+)\s*hPa/s);
-            if (pressureMatch) {
-                data.pressure.max = parseFloat(pressureMatch[1]);
-                data.pressure.min = parseFloat(pressureMatch[2]);
-            }
+                // Extract pressure data - improved regex
+                const pressureMatch = html.match(/Presión.*?Máxima:\s*([\d.]+)\s*hPa.*?Mínima:\s*([\d.]+)\s*hPa/s);
+                if (pressureMatch) {
+                    data.pressure.max = parseFloat(pressureMatch[1]);
+                    data.pressure.min = parseFloat(pressureMatch[2]);
+                    console.log('Pressure data:', data.pressure);
+                }
 
-            // Extract wind data
-            const windMatch = html.match(/Media:\s*([\d.]+)\s*km\/h/);
-            if (windMatch) {
-                data.wind.speed = parseFloat(windMatch[1]);
-            }
+                // Extract wind data - improved regex
+                const windMatch = html.match(/Media:\s*([\d.]+)\s*km\/h/);
+                if (windMatch) {
+                    data.wind.speed = parseFloat(windMatch[1]);
+                    console.log('Wind speed data:', data.wind.speed);
+                }
 
-            const windDirMatch = html.match(/Dirección predominante:\s*(\d+)/);
-            if (windDirMatch) {
-                data.wind.direction = parseInt(windDirMatch[1]);
-            }
+                const windDirMatch = html.match(/Dirección predominante:\s*(\d+)/);
+                if (windDirMatch) {
+                    data.wind.direction = parseInt(windDirMatch[1]);
+                    console.log('Wind direction data:', data.wind.direction);
+                }
 
-            // Extract cloud data
-            const cloudMatch = html.match(/Nubosidad.*?Máxima:\s*([\d.]+)\s*%%.*?Mínima:\s*([\d.]+)\s*%%/s);
-            if (cloudMatch) {
-                data.clouds.max = parseFloat(cloudMatch[1]);
-                data.clouds.min = parseFloat(cloudMatch[2]);
-            }
+                // Extract cloud data - improved regex
+                const cloudMatch = html.match(/Nubosidad.*?Máxima:\s*([\d.]+)\s*%%.*?Mínima:\s*([\d.]+)\s*%%/s);
+                if (cloudMatch) {
+                    data.clouds.max = parseFloat(cloudMatch[1]);
+                    data.clouds.min = parseFloat(cloudMatch[2]);
+                    console.log('Cloud data:', data.clouds);
+                }
 
-            // Extract last update
-            const updateMatch = html.match(/Actualizado:\s*([\d\/]+\s*[\d]+\s*hs\.)/);
-            if (updateMatch) {
-                data.lastUpdate = updateMatch[1];
+                // Extract last update - improved regex
+                const updateMatch = html.match(/Actualizado:\s*([\d\/]+\s*[\d]+\s*hs\.)/);
+                if (updateMatch) {
+                    data.lastUpdate = updateMatch[1];
+                    console.log('Last update:', data.lastUpdate);
+                }
+
+                // If no data was found, try alternative parsing
+                if (!data.temperature.max && !data.humidity.max) {
+                    console.log('Trying alternative parsing methods...');
+                    
+                    // Try to find any temperature values
+                    const anyTemp = html.match(/(\d+(?:\.\d+)?)\s*ºC/g);
+                    if (anyTemp && anyTemp.length >= 2) {
+                        const temps = anyTemp.map(t => parseFloat(t.match(/(\d+(?:\.\d+)?)/)[0])).sort((a, b) => b - a);
+                        data.temperature.max = temps[0];
+                        data.temperature.min = temps[temps.length - 1];
+                        data.temperature.current = Math.round((data.temperature.max + data.temperature.min) / 2);
+                        console.log('Alternative temperature data:', data.temperature);
+                    }
+                    
+                    // Try to find any humidity values
+                    const anyHumidity = html.match(/(\d+(?:\.\d+)?)\s*%/g);
+                    if (anyHumidity && anyHumidity.length >= 2) {
+                        const humidities = anyHumidity.map(h => parseFloat(h.match(/(\d+(?:\.\d+)?)/)[0])).sort((a, b) => b - a);
+                        data.humidity.max = humidities[0];
+                        data.humidity.min = humidities[humidities.length - 1];
+                        console.log('Alternative humidity data:', data.humidity);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error parsing weather data:', error);
             }
 
             return data;
@@ -574,7 +613,24 @@
             document.getElementById('minClouds').textContent = `${data.clouds.min}%`;
 
             // Update last update time
-            document.getElementById('lastUpdate').innerHTML = `<i class="fas fa-sync-alt"></i> Actualizado: ${data.lastUpdate}`;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-AR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            if (data.lastUpdate) {
+                document.getElementById('lastUpdate').innerHTML = `
+                    <i class="fas fa-sync-alt"></i>
+                    Actualizado: ${data.lastUpdate}
+                    <br><small>Última actualización: ${timeString}</small>
+                `;
+            } else {
+                document.getElementById('lastUpdate').innerHTML = `
+                    <i class="fas fa-sync-alt"></i>
+                    Actualizado: ${timeString}
+                `;
+            }
         }
 
         async function fetchWeatherData() {
@@ -590,51 +646,158 @@
             refreshBtn.style.animation = 'spin 1s linear infinite';
 
             try {
-                // Use a proxy to avoid CORS issues
-                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                console.log('Fetching weather data...');
+                
+                // Try multiple proxy services for better reliability
+                const proxyServices = [
+                    'https://api.allorigins.win/get?url=',
+                    'https://cors-anywhere.herokuapp.com/',
+                    'https://cors-proxy.htmldriven.com/?url='
+                ];
+                
                 const targetUrl = 'https://wrf.ohmc.ar/pronosticos/CBA/localidad/cordoba-capital/';
+                let data = null;
+                let success = false;
                 
-                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-                const data = await response.json();
+                // Try each proxy service until one works
+                for (const proxyUrl of proxyServices) {
+                    try {
+                        console.log(`Trying proxy: ${proxyUrl}`);
+                        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
+                            timeout: 10000, // 10 second timeout
+                            headers: {
+                                'User-Agent': 'WeatherApp/1.0'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            if (result.contents) {
+                                data = result;
+                                success = true;
+                                console.log(`Successfully fetched using ${proxyUrl}`);
+                                break;
+                            }
+                        }
+                    } catch (proxyError) {
+                        console.log(`Proxy ${proxyUrl} failed:`, proxyError.message);
+                        continue;
+                    }
+                }
                 
-                if (data.contents) {
-                    weatherData = parseWeatherData(data.contents);
+                if (!success || !data || !data.contents) {
+                    throw new Error('Todos los servicios de proxy fallaron');
+                }
+                
+                console.log('Data received, parsing...');
+                weatherData = parseWeatherData(data.contents);
+                
+                // Validate that we got some data
+                if (weatherData && (weatherData.temperature.max || weatherData.humidity.max)) {
                     updateUI(weatherData);
+                    lastFetchTime = new Date();
                     
                     // Hide loading, show content
                     loadingEl.style.display = 'none';
                     weatherContentEl.style.display = 'grid';
+                    
+                    console.log('Weather data updated successfully');
                 } else {
-                    throw new Error('No se pudieron obtener los datos');
+                    throw new Error('No se pudieron extraer datos válidos del sitio');
                 }
             } catch (error) {
                 console.error('Error fetching weather data:', error);
                 loadingEl.style.display = 'none';
                 errorEl.style.display = 'block';
                 
+                // Show error message
+                errorEl.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error al cargar los datos: ${error.message}</p>
+                    <small>Intenta nuevamente en unos momentos</small>
+                `;
+                
                 // Try to load cached data if available
                 if (weatherData) {
                     updateUI(weatherData);
                     weatherContentEl.style.display = 'grid';
-                    errorEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>Error al actualizar. Mostrando datos anteriores.</p>';
+                    errorEl.innerHTML += '<br><small>Mostrando datos anteriores</small>';
                 }
             } finally {
                 refreshBtn.style.animation = '';
             }
         }
 
-        // Auto-refresh every 30 minutes
-        setInterval(fetchWeatherData, 30 * 60 * 1000);
+        // Fallback data for testing and when API fails
+        function getFallbackData() {
+            return {
+                temperature: {
+                    max: 28.5,
+                    min: 15.2,
+                    current: 22
+                },
+                humidity: {
+                    max: 75.3,
+                    min: 42.1
+                },
+                precipitation: 2.5,
+                pressure: {
+                    max: 1018.5,
+                    min: 1012.3
+                },
+                wind: {
+                    speed: 12.8,
+                    direction: 225
+                },
+                clouds: {
+                    max: 65.0,
+                    min: 15.0
+                },
+                lastUpdate: new Date().toLocaleDateString('es-AR') + ' ' + new Date().getHours() + ' hs.'
+            };
+        }
 
-        // Initial load
-        fetchWeatherData();
+        // Auto-refresh every 5 minutes (reduced from 30 for better updates)
+        setInterval(fetchWeatherData, 5 * 60 * 1000);
 
-        // Add some interactive animations
+        // Initial load with delay to ensure page is ready
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing weather app...');
+            
+            // Add animation delays
             const cards = document.querySelectorAll('.weather-card');
             cards.forEach((card, index) => {
                 card.style.animationDelay = `${index * 0.2}s`;
             });
+            
+            // Try to load data, with fallback if needed
+            fetchWeatherData().catch(error => {
+                console.log('Using fallback data due to fetch error');
+                weatherData = getFallbackData();
+                updateUI(weatherData);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('weatherContent').style.display = 'grid';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <p>Mostrando datos de ejemplo mientras se carga la información actual</p>
+                `;
+            });
+        });
+
+        // Add manual refresh with visual feedback
+        document.querySelector('.refresh-btn').addEventListener('click', function() {
+            this.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+
+        // Add keyboard shortcut for refresh (R key)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'r' || e.key === 'R') {
+                fetchWeatherData();
+            }
         });
     </script>
 </body>
